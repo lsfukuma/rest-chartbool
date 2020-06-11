@@ -20,6 +20,18 @@ $(document).ready(function(){
         }
     }); //fine ajax
 
+//intercettare il click sul bottone
+    $.ajax({
+        'url': apiUrl,
+        'method': 'POST',
+        'success': function(addSale){
+
+        }, //success
+        'error': function(){
+            alert('error');
+        }
+
+    });//chiamata ajax metodo post
 
     function monthlySales (sales){
         var monthSale = {
