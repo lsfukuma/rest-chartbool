@@ -1,13 +1,13 @@
 $(document).ready(function(){
     var apiUrl = 'http://157.230.17.132:4024/sales'
-    // oggetto vuoto per il totale di vendite per mese
+
 
     $.ajax({
         'url': apiUrl,
         'method': 'GET',
         'success': function(salesMonth){
-            // console.log(sales);
-            var dataSales = monthlySales (salesMonth); // salvo in una variabile il return della funzione cha fa le operazioni di calcolo delle vendite per mese e la passo come parametro per disegnare il grafico
+            // console.log(salesMonth);
+            var dataSales = monthlySales(salesMonth); // salvo in una variabile il return della funzione cha fa le operazioni di calcolo delle vendite per mese e la passo come parametro per disegnare il grafico
             chartMonthlySales(dataSales);
             //chiamata della funzione delle vendite per venditore
             var dataSalesSalesman = salesSalesman(salesMonth);
@@ -20,18 +20,31 @@ $(document).ready(function(){
         }
     }); //fine ajax
 
-//intercettare il click sul bottone
-    $.ajax({
-        'url': apiUrl,
-        'method': 'POST',
-        'success': function(addSale){
+    //intercettare il click sul bottone
+    $('#add-sale').on('click', function(){
+        var selectedSalesman = $('.salesman-name').val();
+        var selectedMonth = $('.sale-month').val();
+        var dateSale = '01/'+ selectedMonth + '2017';
+        var amountAdded = $('#amount-sale').val();
 
-        }, //success
-        'error': function(){
-            alert('error');
-        }
+        $.ajax({
+            'url': apiUrl,
+            'method': 'POST',
+            'data': {
+                salesman: selectSalesman,
+                date: dateSale,
+                amount: amountAdded ,
+            },
+            'success': function(addSale){
 
-    });//chiamata ajax metodo post
+            }, //success
+            'error': function(){
+                alert('error');
+            }
+
+        });//chiamata ajax metodo post
+    });//fine click
+
 
     function monthlySales (sales){
         var monthSale = {
@@ -56,7 +69,7 @@ $(document).ready(function(){
             // console.log(amount);
             //creo una variabile per recuperare la data della vendita
             var dateSale = moment(sales[i].date, "DD/MM/YYYY").format("MMMM");
-            // console.log(dateSale);
+            console.log(dateSale);
             //faccio la somma delle vendite mensili
             monthSale[dateSale] += amount;
         }
@@ -76,17 +89,18 @@ $(document).ready(function(){
                 totalSalesman[nameSalesman] += salesSalesman ;
             }
             totalSales += salesSalesman;
-            console.log(totalSales);
+            // console.log(totalSales);
         }
-            // ciclo for in per recuperare i nomi dei venditori e le vendite degll'oggetto
-            for (nameSalesman in totalSalesman) {
-            var amountSalesman = totalSalesman[nameSalesman];
-            // calcolo la percentuale delle vendite di ogni venditore
-            var percentageSalesman = (amountSalesman * 100 / totalSales).toFixed(1);
-            // percentuale come label
-            totalSalesman[nameSalesman] = percentageSalesman;
+        // ciclo for in per recuperare i nomi dei venditori e le vendite degll'oggetto totalSalesman
+        for (nameSalesman in totalSalesman) {
+        var amountSalesman = totalSalesman[nameSalesman];
+        // calcolo la percentuale delle vendite di ogni venditore
+        var percentageSalesman = (amountSalesman * 100 / totalSales).toFixed(1);
+        // percentuale come label
+        totalSalesman[nameSalesman] = percentageSalesman;
         }
-        return totalSalesman
+
+        return totalSalesman;
     }
 
     function chartMonthlySales(monthSale){
@@ -121,6 +135,7 @@ $(document).ready(function(){
         var salesmanName = Object.keys(totalSalesman);
         console.log(salesmanName);
         var salesmanSales = Object.values(totalSalesman);
+        console.log(salesmanSales);
         //chartMonthlySales
         var ctx = $('#chartSalesmanSales')[0].getContext('2d');
         var myChart = new Chart(ctx, {
