@@ -1,42 +1,30 @@
 $(document).ready(function(){
     var apiUrl = 'http://157.230.17.132:4024/sales'
-
-
-    $.ajax({
-        'url': apiUrl,
-        'method': 'GET',
-        'success': function(salesMonth){
-            // console.log(salesMonth);
-            var dataSales = monthlySales(salesMonth); // salvo in una variabile il return della funzione cha fa le operazioni di calcolo delle vendite per mese e la passo come parametro per disegnare il grafico
-            chartMonthlySales(dataSales);
-            //chiamata della funzione delle vendite per venditore
-            var dataSalesSalesman = salesSalesman(salesMonth);
-            //chiamata della funzione per creare i grafici delle vendite x venditore
-            chartSalesman(dataSalesSalesman);
-
-        }, // success
-        'error': function(){
-            alert('error');
-        }
-    }); //fine ajax
-
+    callGET()
     //intercettare il click sul bottone
     $('#add-sale').on('click', function(){
         var selectedSalesman = $('.salesman-name').val();
         var selectedMonth = $('.sale-month').val();
-        var dateSale = '01/'+ selectedMonth + '2017';
+        var dateSale = '01/'+ selectedMonth + '/2017';
         var amountAdded = $('#amount-sale').val();
-
+        // console.log(selectedSalesman);
+        // console.log(dateSale);
+        // console.log(amountAdded);
         $.ajax({
             'url': apiUrl,
             'method': 'POST',
             'data': {
-                salesman: selectSalesman,
-                date: dateSale,
-                amount: amountAdded ,
+                'salesman': selectedSalesman,
+                'amount': amountAdded ,
+                'date': dateSale,
             },
             'success': function(addSale){
-
+                if (selectedSalesman != '' && selectedMonth != '' && amountAdded > 0) {
+                    $('.sale-month').val('');
+                    $('.salesman-name').val('');
+                    $('#amount-sale').val('');
+                    callGET();
+                }
             }, //success
             'error': function(){
                 alert('error');
@@ -44,6 +32,27 @@ $(document).ready(function(){
 
         });//chiamata ajax metodo post
     });//fine click
+
+    function callGET(){
+        $.ajax({
+            'url': apiUrl,
+            'method': 'GET',
+            'success': function(salesMonth){
+                console.log(salesMonth);
+                var dataSales = monthlySales(salesMonth); // salvo in una variabile il return della funzione cha fa le operazioni di calcolo delle vendite per mese e la passo come parametro per disegnare il grafico
+                chartMonthlySales(dataSales);
+                //chiamata della funzione delle vendite per venditore
+                var dataSalesSalesman = salesSalesman(salesMonth);
+                //chiamata della funzione per creare i grafici delle vendite x venditore
+                chartSalesman(dataSalesSalesman);
+
+            }, // success
+            'error': function(){
+                alert('error');
+            }
+        }); //fine ajax
+    };
+
 
 
     function monthlySales (sales){
@@ -64,12 +73,15 @@ $(document).ready(function(){
 
         //ciclare l'array per togliere i dati necessari
         for (var i = 0; i < sales.length; i++) {
+            if (!sales[i].hasOwnProperty('amount')|| !sales[i].hasOwnProperty('date')) {
+                continue;
+            }
             //creo una variabile per recuperare la quantita venduta
             var amount = parseInt(sales[i].amount)
             // console.log(amount);
             //creo una variabile per recuperare la data della vendita
             var dateSale = moment(sales[i].date, "DD/MM/YYYY").format("MMMM");
-            console.log(dateSale);
+            // console.log(dateSale);
             //faccio la somma delle vendite mensili
             monthSale[dateSale] += amount;
         }
@@ -81,6 +93,9 @@ $(document).ready(function(){
         var totalSalesman = {};
         var totalSales = 0
         for (var i = 0; i < sales.length; i++) {
+            if (!sales[i].hasOwnProperty('amount') || !sales[i].hasOwnProperty('salesman')) {
+                continue;
+            }
             var salesSalesman = parseInt(sales[i].amount);
             var nameSalesman = sales[i].salesman;
             if (!totalSalesman.hasOwnProperty(nameSalesman)) {
@@ -104,6 +119,9 @@ $(document).ready(function(){
     }
 
     function chartMonthlySales(monthSale){
+        $('#chart-wrapper-monthly-sales').empty();
+        $('#chart-wrapper-monthly-sales').append('<canvas id="chartMonthlySales"></canvas></div>');
+
         //estraggo le chiavi dell'oggetto creato precedentemente monthSale
         var key = Object.keys(monthSale);
         console.log(key);
@@ -132,6 +150,9 @@ $(document).ready(function(){
     }
 
     function chartSalesman(totalSalesman){
+        $('#chart-wrapper-salesman-sales').empty();
+        $('#chart-wrapper-salesman-sales').append('<canvas id="chartSalesmanSales"></canvas>');
+
         var salesmanName = Object.keys(totalSalesman);
         console.log(salesmanName);
         var salesmanSales = Object.values(totalSalesman);
